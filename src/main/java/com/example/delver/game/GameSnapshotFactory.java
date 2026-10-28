@@ -48,9 +48,8 @@ final class GameSnapshotFactory {
                 run.player.hp, run.player.maxHp, run.player.gold, run.player.attack + run.player.equippedWeapon.bonus(),
                 weaponView(run.player.equippedWeapon), armorView(run.player.equippedArmor),
                 run.player.inventory.stream().map(this::inventoryItemView).toList(), run.player.inventoryCapacity);
-        int score = run.player.gold + (run.floor - 1) * 100;
         return new GameSnapshot(run.id, run.playerName, run.floor, run.turn, run.width, run.height,
-                map, player, enemies, loot, List.copyOf(run.messages), run.gameOver, score);
+                map, player, enemies, loot, List.copyOf(run.messages), run.gameOver, run.score());
     }
 
     private boolean[][] visibleTiles(GameRun run, int currentRoom) {

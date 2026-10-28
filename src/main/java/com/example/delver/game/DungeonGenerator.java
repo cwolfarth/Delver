@@ -119,7 +119,7 @@ final class DungeonGenerator {
             int[] enemyPosition = randomRoomPosition(run, roomId);
             if ((enemyPosition[0] != stairs[0] || enemyPosition[1] != stairs[1])
                     && (enemyPosition[0] != run.player.x || enemyPosition[1] != run.player.y)
-                    && enemyAt(run, enemyPosition[0], enemyPosition[1]) == null) {
+                    && run.enemyAt(enemyPosition[0], enemyPosition[1]) == null) {
                 List<EnemyType> enemyPool = enemyPoolForFloor(run.floor);
                 EnemyType type = enemyPool.size() == 1
                         ? enemyPool.getFirst() : enemyPool.get(random.nextInt(enemyPool.size()));
@@ -204,7 +204,7 @@ final class DungeonGenerator {
                 int x = random.nextInt(run.width);
                 int y = random.nextInt(run.height);
                 if (run.tiles[y][x] == TileType.FLOOR && !(x == run.player.x && y == run.player.y)
-                        && enemyAt(run, x, y) == null && run.loot.stream().noneMatch(item -> item.x == x && item.y == y)) {
+                        && run.enemyAt(x, y) == null && run.loot.stream().noneMatch(item -> item.x == x && item.y == y)) {
                     run.loot.add(new GameRun.Loot(type, x, y, amount, name));
                     break;
                 }
@@ -219,7 +219,7 @@ final class DungeonGenerator {
                 int lootX = x;
                 int lootY = y;
                 boolean occupied = (x == run.player.x && y == run.player.y)
-                        || enemyAt(run, x, y) != null
+                        || run.enemyAt(x, y) != null
                         || run.loot.stream().anyMatch(item -> item.x == lootX && item.y == lootY);
                 if (run.tiles[y][x] == TileType.FLOOR && !occupied) {
                     candidates.add(new int[]{x, y});
@@ -241,7 +241,7 @@ final class DungeonGenerator {
                 int lootX = x;
                 int lootY = y;
                 boolean occupied = x == run.player.x && y == run.player.y
-                        || enemyAt(run, x, y) != null
+                        || run.enemyAt(x, y) != null
                         || run.loot.stream().anyMatch(item -> item.x == lootX && item.y == lootY);
                 if (run.roomIds[y][x] == roomId && !occupied) {
                     candidates.add(new int[]{x, y});
@@ -256,7 +256,4 @@ final class DungeonGenerator {
                 loot.weaponType, loot.armorType));
     }
 
-    private GameRun.Enemy enemyAt(GameRun run, int x, int y) {
-        return run.enemies.stream().filter(enemy -> enemy.x == x && enemy.y == y).findFirst().orElse(null);
-    }
 }

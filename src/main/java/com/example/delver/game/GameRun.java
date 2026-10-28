@@ -31,6 +31,42 @@ final class GameRun {
         this.playerName = playerName;
     }
 
+    int score() {
+        return player.gold + (floor - 1) * 100;
+    }
+
+    void beginTurn() {
+        messages.clear();
+        turn++;
+    }
+
+    void addMessage(String message) {
+        messages.add(message);
+    }
+
+    void movePlayerTo(int x, int y) {
+        player.x = x;
+        player.y = y;
+    }
+
+    void descend() {
+        floor++;
+    }
+
+    boolean finishIfPlayerDied() {
+        if (player.hp > 0) {
+            return false;
+        }
+        player.hp = 0;
+        gameOver = true;
+        addMessage("You have fallen. Your run is over.");
+        return true;
+    }
+
+    Enemy enemyAt(int x, int y) {
+        return enemies.stream().filter(enemy -> enemy.x == x && enemy.y == y).findFirst().orElse(null);
+    }
+
     static final class Player {
         int x;
         int y;

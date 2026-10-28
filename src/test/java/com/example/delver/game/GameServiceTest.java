@@ -37,7 +37,7 @@ class GameServiceTest {
         snapshotFactory = new GameSnapshotFactory();
         inventoryService = new InventoryService();
         gameService = new GameService(highScoreService, dungeonGenerator, snapshotFactory, inventoryService,
-                new Random(81723));
+                new CombatService(new Random(81723)));
     }
 
     @Test
@@ -302,10 +302,10 @@ class GameServiceTest {
 
     @Test
     void playerAndEnemyHitRollsUseASeventyPercentChance() {
-        assertThat(GameService.rollToHit(randomReturning(0))).isTrue();
-        assertThat(GameService.rollToHit(randomReturning(69))).isTrue();
-        assertThat(GameService.rollToHit(randomReturning(70))).isFalse();
-        assertThat(GameService.rollToHit(randomReturning(99))).isFalse();
+        assertThat(CombatService.rollToHit(randomReturning(0))).isTrue();
+        assertThat(CombatService.rollToHit(randomReturning(69))).isTrue();
+        assertThat(CombatService.rollToHit(randomReturning(70))).isFalse();
+        assertThat(CombatService.rollToHit(randomReturning(99))).isFalse();
     }
 
     @Test
@@ -371,6 +371,15 @@ class GameServiceTest {
 
         assertThat(afterTurn.turn()).isEqualTo(started.turn() + 1);
         assertThat(afterTurn.messages()).contains("You wait and listen to the dungeon.");
+    }
+
+    @Test
+    void runScoreCombinesGoldAndFloors() {
+        GameRun run = new GameRun(UUID.randomUUID(), "Ada");
+        run.floor = 3;
+        run.player.gold = 45;
+
+        assertThat(run.score()).isEqualTo(245);
     }
 
     @Test
