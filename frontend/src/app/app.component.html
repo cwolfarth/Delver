@@ -1,0 +1,135 @@
+<div class="app-shell">
+  @if (!run) {
+    <main class="landing">
+      <section class="welcome-panel">
+        <div class="eyebrow"><span class="eyebrow-line"></span> THE DUNGEON AWAITS</div>
+        <h1>Fortune favors<br><em>the fearless.</em></h1>
+        <p class="intro-copy">Descend into forgotten halls. Gather what you can. Find the stairs before the dark finds you.</p>
+        <div class="run-form">
+          <label for="delver-name">YOUR NAME</label>
+          <input id="delver-name" maxlength="24" placeholder="Enter a name, delver" [value]="playerName" (input)="onNameInput($event)" (keydown.enter)="startRun()">
+          <button class="primary-button" (click)="startRun()" [disabled]="busy">
+            <span>{{ busy ? 'PREPARING YOUR DESCENT…' : 'BEGIN YOUR DESCENT' }}</span><span class="button-arrow">↗</span>
+          </button>
+          @if (error) { <p class="error-message">{{ error }}</p> }
+          <div class="controls-hint"><span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span><span>or arrow keys to move</span></div>
+        </div>
+        <div class="landing-rule"></div>
+        <div class="promise-row"><span>✦ &nbsp; EVERY RUN IS DIFFERENT</span><span>✦ &nbsp; NO WAY BACK</span></div>
+      </section>
+
+      <aside class="landing-aside">
+        <div class="art-card">
+          <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+          <div class="art-rune">✳</div><div class="art-stairs">⌄<br>⌄<br>⌄</div>
+          <span class="art-caption">BENEATH THE OLD WORLD</span>
+        </div>
+        <div class="score-card">
+          <div class="section-heading"><span>HALL OF THE FALLEN</span><span class="heading-spark">✳</span></div>
+          @if (scoreError) { <p class="empty-scores">{{ scoreError }}</p> }
+          @else if (scores.length) {
+            @for (score of scores; track $index) {
+              <div class="score-row"><span class="rank">{{ ($index + 1).toString().padStart(2, '0') }}</span><span class="score-name">{{ score.playerName }}</span><span class="score-floor">F{{ score.floor }}</span><strong>{{ score.score }}</strong></div>
+            }
+          } @else { <p class="empty-scores">No legends yet. Make the first descent.</p> }
+        </div>
+      </aside>
+    </main>
+  } @else {
+    <main class="game-layout">
+      <section class="play-column">
+        <div class="run-heading">
+          <div><div class="eyebrow"><span class="eyebrow-line"></span> YOUR DESCENT</div><h1>{{ run.playerName }} <span class="heading-muted">/ Floor {{ run.floor }}</span></h1></div>
+          <div class="run-meta"><span>TURN <b>{{ run.turn.toString().padStart(3, '0') }}</b></span><span class="meta-divider"></span><span>RUN <b>{{ run.runId.slice(0, 6).toUpperCase() }}</b></span></div>
+        </div>
+        <div class="dungeon-frame" [class.busy]="busy">
+          <div class="dungeon-topline"><span><i class="tiny-dot"></i> THE SUNKEN ARCHIVE</span><span>FLOOR {{ run.floor }} <span class="topline-slash">/</span> {{ run.floor > 1 ? 'LOWER CATACOMBS' : 'UPPER VAULT' }}</span></div>
+          <div class="map-scroller">
+            <div class="dungeon-map" [style.grid-template-columns]="'repeat(' + run.width + ', minmax(0, 1fr))'" [attr.aria-label]="'Dungeon map, floor ' + run.floor">
+              @for (row of board; track $index) {
+                @for (cell of row; track cell.key) {
+                  <div [class]="cell.className" [attr.aria-label]="cell.label">{{ cell.marker }}</div>
+                }
+              }
+            </div>
+          </div>
+          <div class="map-legend"><span><i class="legend-player">&#64;</i> YOU</span><span><i class="legend-enemy">g</i> ENEMY</span><span><i class="legend-loot">$</i> LOOT</span><span><i class="legend-stairs">⇩</i> STAIRS</span><span><i class="legend-fog">·</i> UNEXPLORED LAYOUT</span></div>
+        </div>
+        <section class="journal-card">
+          <div class="section-heading"><span>FIELD JOURNAL</span><span class="journal-count">{{ run.messages.length.toString().padStart(2, '0') }} NEW</span></div>
+          <div class="journal-entries">
+            @for (message of run.messages; track $index) { <p><span class="journal-bullet">›</span>{{ message }}</p> }
+            @if (!run.messages.length) { <p class="journal-quiet">The silence is uneasy.</p> }
+          </div>
+          @if (error) { <p class="error-message">{{ error }}</p> }
+        </section>
+      </section>
+
+      <aside class="side-column">
+        <section class="stat-card">
+          <div class="section-heading"><span>DELVER STATUS</span><span class="heading-spark">✳</span></div>
+          <div class="health-label"><span>VITALITY</span><strong>{{ run.player.hp }} <small>/ {{ run.player.maxHp }}</small></strong></div>
+          <div class="health-track"><div class="health-fill" [style.width.%]="hpPercent()"></div></div>
+          <div class="stat-grid"><div class="stat-item"><span>GOLD</span><strong><i class="gold-icon">◆</i> {{ run.player.gold }}</strong></div><div class="stat-item"><span>ATTACK</span><strong>⚔ {{ run.player.attack }}</strong></div><div class="stat-item"><span>POTIONS</span><strong>✚ {{ potionCount() }}</strong></div><div class="stat-item"><span>FLOOR</span><strong>⌄ {{ run.floor }}</strong></div></div>
+        </section>
+
+        <section class="inventory-card">
+          <div class="section-heading"><span>INVENTORY</span><span class="heading-spark">{{ run.player.inventory.length }} / {{ run.player.inventoryCapacity }}</span></div>
+          <div class="equipped-gear">
+            <div><span class="gear-type">EQUIPPED WEAPON</span><strong>{{ run.player.equippedWeapon.name }}</strong><small>Attack +{{ run.player.equippedWeapon.bonus }} · {{ run.player.equippedWeapon.rarity }} · {{ run.player.equippedWeapon.sellValue }} gold</small></div>
+            <div><span class="gear-type">EQUIPPED ARMOR</span><strong>{{ run.player.equippedArmor.name }}</strong><small>Defense +{{ run.player.equippedArmor.bonus }} · {{ run.player.equippedArmor.rarity }} · {{ run.player.equippedArmor.sellValue }} gold</small></div>
+          </div>
+          <div class="inventory-slots">
+            @for (slot of inventorySlots(); track slot) {
+              <div class="inventory-slot">
+                <span class="slot-number">{{ (slot + 1).toString().padStart(2, '0') }}</span>
+                @if (run.player.inventory[slot]; as item) {
+                  <div class="slot-item"><strong>{{ item.name }}</strong><small>{{ inventoryItemDescription(item) }}</small></div>
+                  <div class="slot-actions">
+                    @if (item.type === 'POTION') {
+                      <button (click)="act('USE_POTION', slot)" [disabled]="busy || run.gameOver">USE</button>
+                    } @else {
+                      <button (click)="act('EQUIP_ITEM', slot)" [disabled]="busy || run.gameOver">EQUIP</button>
+                    }
+                    <button class="discard-action" (click)="act('DISCARD_ITEM', slot)" [disabled]="busy || run.gameOver">DISCARD</button>
+                  </div>
+                } @else {
+                  <span class="empty-slot">Empty</span>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="controls-card">
+          <div class="section-heading"><span>CONTROLS</span><span class="heading-spark">⌘</span></div>
+          <div class="controls-row">
+            <div class="action-copy"><span class="action-kicker">YOUR MOVE</span><span>Every step gives the dungeon a turn.</span></div>
+            <div class="move-pad" aria-label="Movement controls">
+              <button class="move-key north" (click)="act('MOVE_NORTH')" [disabled]="busy || run.gameOver" aria-label="Move north">↑</button>
+              <button class="move-key west" (click)="act('MOVE_WEST')" [disabled]="busy || run.gameOver" aria-label="Move west">←</button>
+              <button class="move-key wait" (click)="act('WAIT')" [disabled]="busy || run.gameOver" aria-label="Wait">·</button>
+              <button class="move-key east" (click)="act('MOVE_EAST')" [disabled]="busy || run.gameOver" aria-label="Move east">→</button>
+              <button class="move-key south" (click)="act('MOVE_SOUTH')" [disabled]="busy || run.gameOver" aria-label="Move south">↓</button>
+            </div>
+          </div>
+          <button class="potion-button" (click)="act('USE_POTION')" [disabled]="busy || run.gameOver || !hasPotion()"><span>✚</span> DRINK POTION <kbd>H</kbd></button>
+        </section>
+
+        <button class="abandon-button" (click)="run = null; error = ''">ABANDON RUN <span>↗</span></button>
+      </aside>
+    </main>
+    @if (run.gameOver) {
+      <div class="gameover-backdrop"><section class="gameover-card"><div class="gameover-symbol">✳</div><div class="eyebrow">THE DUNGEON CLAIMS ANOTHER</div><h2>Your descent<br><em>ends here.</em></h2><p>You reached floor {{ run.floor }} and carried {{ run.player.gold }} gold into the dark.</p><div class="final-score"><span>RUN SCORE</span><strong>{{ run.score }}</strong></div><button class="primary-button" (click)="startRun()"><span>DESCEND AGAIN</span><span class="button-arrow">↗</span></button></section></div>
+    }
+  }
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Delver home">
+      <span class="brand-mark">D</span>
+      <span>DELVER<span class="brand-dot">.</span></span>
+    </a>
+    <div class="topbar-note"><span class="live-dot"></span> A SINGLE-PLAYER DESCENT</div>
+    <div class="topbar-right"><span class="edition">EARLY ACCESS</span><span class="topbar-divider"></span><span class="version">v0.1.0</span></div>
+  </header>
+  <footer class="site-footer"><span>DELVER <i>© 2026</i></span><span>THE DUNGEON REMEMBERS.</span><span>BUILT FOR THE BRAVE <i>✳</i></span></footer>
+</div>

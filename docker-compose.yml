@@ -1,0 +1,40 @@
+name: delver
+
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dungeon
+      POSTGRES_USER: dungeon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dungeon}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dungeon -d dungeon"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/dungeon
+      SPRING_DATASOURCE_USERNAME: dungeon
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dungeon}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

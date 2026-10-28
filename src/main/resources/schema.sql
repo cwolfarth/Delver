@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS high_scores (
+    id BIGSERIAL PRIMARY KEY,
+    player_name VARCHAR(24) NOT NULL,
+    score INTEGER NOT NULL,
+    floor_reached INTEGER NOT NULL,
+    gold INTEGER NOT NULL,
+    achieved_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
