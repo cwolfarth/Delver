@@ -1,13 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
 import { finalize, timeout } from 'rxjs';
-import { GameApiService, Action, GameSnapshot, HighScore, InventoryItem } from './game-api.service';
+import { Armor, GameApiService, Action, GameSnapshot, HighScore, InventoryItem } from './game-api.service';
 
 interface BoardCell {
   key: string;
   className: string;
   marker: string;
   label: string;
+}
+
+interface EquippedArmorSlot {
+  label: string;
+  armor: Armor | null;
 }
 
 @Component({
@@ -112,8 +117,18 @@ export class AppComponent implements OnInit {
 
   inventoryItemDescription(item: InventoryItem): string {
     if (item.type === 'WEAPON') return `Attack +${item.bonus} · Accuracy ${item.accuracy > 0 ? '+' : ''}${item.accuracy}% · ${item.rarity} · ${item.sellValue} gold`;
-    if (item.type === 'ARMOR') return `Defense +${item.bonus} · ${item.rarity} · ${item.sellValue} gold`;
+    if (item.type === 'ARMOR') return `${item.armorSlot} · Defense +${item.bonus} · ${item.rarity} · ${item.sellValue} gold`;
     return 'Restores health';
+  }
+
+  equippedArmorSlots(): EquippedArmorSlot[] {
+    const player = this.run?.player;
+    return [
+      { label: 'CHEST', armor: player?.equippedArmor ?? null },
+      { label: 'HELMET', armor: player?.equippedHelmet ?? null },
+      { label: 'GAUNTLETS', armor: player?.equippedGauntlets ?? null },
+      { label: 'BOOTS', armor: player?.equippedBoots ?? null }
+    ];
   }
 
   private loadScores(): void {

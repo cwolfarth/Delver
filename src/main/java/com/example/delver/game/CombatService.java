@@ -64,7 +64,7 @@ final class CombatService {
             return;
         }
         int damage = Math.max(1, enemy.type.attackPower() + random.nextInt(2)
-                - run.player.equippedArmor.bonus());
+                - run.player.armorDefense());
         run.player.hp -= damage;
         run.messages.add("The " + enemy.type.displayName() + " hits you for " + damage + " damage.");
     }

@@ -1,5 +1,6 @@
 package com.example.delver.game;
 
+import com.example.delver.game.content.ArmorSlot;
 import com.example.delver.game.content.ArmorType;
 import com.example.delver.game.content.EnemyType;
 import com.example.delver.game.content.ItemRarity;
@@ -240,7 +241,7 @@ class GameServiceTest {
         assertThat(run.player.inventory.getFirst().weaponType()).isEqualTo(WeaponType.ARM_SWORD);
 
         inventoryService.equipItem(run, 0);
-        assertThat(run.player.equippedWeapon.name()).isEqualTo("iron sword");
+        assertThat(run.player.equippedWeapon.name()).isEqualTo("Arming sword");
         assertThat(run.player.inventory.getFirst().weaponType()).isEqualTo(WeaponType.WORN_BLADE);
         assertThat(run.player.attack + run.player.equippedWeapon.bonus()).isEqualTo(6);
 
@@ -249,6 +250,48 @@ class GameServiceTest {
         inventoryService.equipItem(run, 1);
         assertThat(run.player.equippedArmor.name()).isEqualTo("leather armor");
         assertThat(run.player.inventory.get(1).armorType()).isEqualTo(ArmorType.CLOTH_ARMOR);
+
+        run.loot.add(new GameRun.Loot(ArmorType.LEATHER_HELMET, run.player.x, run.player.y));
+        inventoryService.collectLoot(run);
+        inventoryService.equipItem(run, 2);
+        assertThat(run.player.equippedHelmet.name()).isEqualTo("leather helmet");
+        assertThat(run.player.inventory).hasSize(2);
+
+        run.loot.add(new GameRun.Loot(ArmorType.LEATHER_GAUNTLETS, run.player.x, run.player.y));
+        inventoryService.collectLoot(run);
+        inventoryService.equipItem(run, 2);
+        run.loot.add(new GameRun.Loot(ArmorType.LEATHER_BOOTS, run.player.x, run.player.y));
+        inventoryService.collectLoot(run);
+        inventoryService.equipItem(run, 2);
+        assertThat(run.player.equippedGauntlets.type()).isEqualTo(ArmorType.LEATHER_GAUNTLETS);
+        assertThat(run.player.equippedBoots.type()).isEqualTo(ArmorType.LEATHER_BOOTS);
+        assertThat(run.player.armorDefense()).isEqualTo(4);
+
+        run.loot.add(new GameRun.Loot(ArmorType.CLOTH_HELMET, run.player.x, run.player.y));
+        inventoryService.collectLoot(run);
+        inventoryService.equipItem(run, 2);
+        assertThat(run.player.equippedHelmet.type()).isEqualTo(ArmorType.CLOTH_HELMET);
+        assertThat(run.player.inventory.get(2).armorType()).isEqualTo(ArmorType.LEATHER_HELMET);
+    }
+
+    @Test
+    void armorFromEverySlotContributesToEnemyDamageReduction() {
+        GameRun run = new GameRun(UUID.randomUUID(), "Ada");
+        run.player.equippedArmor = new GameRun.Armor(ArmorType.LEATHER_ARMOR);
+        run.player.equippedHelmet = new GameRun.Armor(ArmorType.LEATHER_HELMET);
+        run.player.equippedGauntlets = new GameRun.Armor(ArmorType.LEATHER_GAUNTLETS);
+        run.player.equippedBoots = new GameRun.Armor(ArmorType.LEATHER_BOOTS);
+        GameRun.Enemy enemy = new GameRun.Enemy(EnemyType.GOBLIN, 1, 0);
+        run.enemies.add(enemy);
+
+        new CombatService(new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        }).resolveEnemyTurn(run);
+
+        assertThat(run.player.hp).isEqualTo(20 - Math.max(1, EnemyType.GOBLIN.attackPower() - 4));
     }
 
     @Test
@@ -309,16 +352,16 @@ class GameServiceTest {
 
         assertThat(CombatService.rollToHit(randomReturning(69), WeaponType.WORN_BLADE.accuracy())).isTrue();
         assertThat(CombatService.rollToHit(randomReturning(70), WeaponType.WORN_BLADE.accuracy())).isFalse();
-        assertThat(CombatService.rollToHit(randomReturning(74), WeaponType.LONG_SWORD.accuracy())).isTrue();
-        assertThat(CombatService.rollToHit(randomReturning(75), WeaponType.LONG_SWORD.accuracy())).isFalse();
+        assertThat(CombatService.rollToHit(randomReturning(78), WeaponType.SHORT_SPEAR.accuracy())).isTrue();
+        assertThat(CombatService.rollToHit(randomReturning(79), WeaponType.SHORT_SPEAR.accuracy())).isFalse();
 
         GameRun run = new GameRun(UUID.randomUUID(), "Ada");
         GameRun.Enemy enemy = new GameRun.Enemy(EnemyType.GOBLIN, 1, 0);
         new CombatService(randomWithHitRoll(74)).attack(run, enemy);
         assertThat(run.messages).contains("You miss the goblin.");
 
-        run.player.equippedWeapon = new GameRun.Weapon(WeaponType.LONG_SWORD);
-        new CombatService(randomWithHitRoll(74)).attack(run, enemy);
+        run.player.equippedWeapon = new GameRun.Weapon(WeaponType.SHORT_SPEAR);
+        new CombatService(randomWithHitRoll(78)).attack(run, enemy);
         assertThat(run.messages).anyMatch(message -> message.startsWith("You strike the goblin"));
     }
 
@@ -347,7 +390,7 @@ class GameServiceTest {
 
     @Test
     void weaponAndArmorTypesOwnTheirNamesAndBonuses() {
-        assertThat(WeaponType.ARM_SWORD.displayName()).isEqualTo("iron sword");
+        assertThat(WeaponType.ARM_SWORD.displayName()).isEqualTo("Arming sword");
         assertThat(WeaponType.ARM_SWORD.attackBonus()).isEqualTo(2);
         assertThat(ArmorType.LEATHER_ARMOR.displayName()).isEqualTo("leather armor");
         assertThat(ArmorType.LEATHER_ARMOR.defenseBonus()).isEqualTo(1);
@@ -373,17 +416,26 @@ class GameServiceTest {
         run.roomIds = new int[][]{{-1}};
         run.exploredTiles = new boolean[][]{{false}};
         run.loot.add(new GameRun.Loot(WeaponType.DRAGONFANG, 0, 0));
+        run.loot.add(new GameRun.Loot(ArmorType.DRAGON_SCALE_HELMET, 0, 0));
         run.player.inventory.add(GameRun.Item.weapon(WeaponType.LONG_SWORD));
+        run.player.inventory.add(GameRun.Item.armor(ArmorType.PLATE_BOOTS));
+        run.player.equippedHelmet = new GameRun.Armor(ArmorType.LEATHER_HELMET);
 
         GameSnapshot snapshot = snapshotFactory.create(run);
         GameSnapshot.LootView loot = snapshot.loot().getFirst();
+        GameSnapshot.LootView helmetLoot = snapshot.loot().get(1);
 
         assertThat(loot.rarity()).isEqualTo(ItemRarity.LEGENDARY);
         assertThat(loot.sellValue()).isEqualTo(WeaponType.DRAGONFANG.sellValue());
         assertThat(loot.accuracy()).isEqualTo(WeaponType.DRAGONFANG.accuracy());
+        assertThat(helmetLoot.armorSlot()).isEqualTo(ArmorSlot.HELMET);
         assertThat(snapshot.player().equippedWeapon().accuracy()).isEqualTo(WeaponType.WORN_BLADE.accuracy());
+        assertThat(snapshot.player().equippedHelmet().slot()).isEqualTo(ArmorSlot.HELMET);
+        assertThat(snapshot.player().defense()).isEqualTo(1);
         assertThat(snapshot.player().inventory().stream().filter(item -> item.weaponType() == WeaponType.LONG_SWORD)
                 .findFirst().orElseThrow().accuracy()).isEqualTo(WeaponType.LONG_SWORD.accuracy());
+        assertThat(snapshot.player().inventory().stream().filter(item -> item.armorType() == ArmorType.PLATE_BOOTS)
+                .findFirst().orElseThrow().armorSlot()).isEqualTo(ArmorSlot.BOOTS);
     }
 
     @Test

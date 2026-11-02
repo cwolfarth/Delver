@@ -1,5 +1,6 @@
 package com.example.delver.game;
 
+import com.example.delver.game.content.ArmorSlot;
 import com.example.delver.game.content.ArmorType;
 import com.example.delver.game.content.EnemyType;
 import com.example.delver.game.content.ItemRarity;
@@ -25,7 +26,8 @@ public record GameSnapshot(
         int score
 ) {
     public record PlayerView(int x, int y, int hp, int maxHp, int gold, int attack,
-                             WeaponView equippedWeapon, ArmorView equippedArmor,
+                             int defense, WeaponView equippedWeapon, ArmorView equippedArmor,
+                             ArmorView equippedHelmet, ArmorView equippedGauntlets, ArmorView equippedBoots,
                              List<InventoryItemView> inventory, int inventoryCapacity) {
     }
 
@@ -33,7 +35,7 @@ public record GameSnapshot(
     }
 
     public record LootView(String type, String name, int x, int y, int amount,
-                           WeaponType weaponType, ArmorType armorType, Integer accuracy,
+                           WeaponType weaponType, ArmorType armorType, ArmorSlot armorSlot, Integer accuracy,
                            ItemRarity rarity, int sellValue) {
     }
 
@@ -41,11 +43,12 @@ public record GameSnapshot(
                              ItemRarity rarity, int sellValue) {
     }
 
-    public record ArmorView(ArmorType type, String name, int bonus, ItemRarity rarity, int sellValue) {
+    public record ArmorView(ArmorType type, String name, ArmorSlot slot, int bonus,
+                            ItemRarity rarity, int sellValue) {
     }
 
     public record InventoryItemView(String type, String name, int bonus,
-                                    WeaponType weaponType, ArmorType armorType, int accuracy,
+                                    WeaponType weaponType, ArmorType armorType, ArmorSlot armorSlot, int accuracy,
                                     ItemRarity rarity, int sellValue) {
     }
 }

@@ -1,5 +1,6 @@
 package com.example.delver.game;
 
+import com.example.delver.game.content.ArmorSlot;
 import com.example.delver.game.content.LootType;
 import org.springframework.stereotype.Component;
 
@@ -37,10 +38,17 @@ final class InventoryService {
                 run.messages.add("You equip " + item.name() + " and stow " + previous.name() + ".");
             }
             case ARMOR -> {
-                GameRun.Armor previous = run.player.equippedArmor;
-                run.player.equippedArmor = new GameRun.Armor(item.armorType());
-                run.player.inventory.set(slot, GameRun.Item.armor(previous.type()));
-                run.messages.add("You equip " + item.name() + " and stow " + previous.name() + ".");
+                ArmorSlot armorSlot = item.armorType().slot();
+                GameRun.Armor previous = run.player.equippedArmor(armorSlot);
+                run.player.equipArmor(armorSlot, new GameRun.Armor(item.armorType()));
+                if (previous == null) {
+                    run.player.inventory.remove((int) slot);
+                    run.messages.add("You equip " + item.name() + " in your "
+                            + armorSlot.name().toLowerCase() + " slot.");
+                } else {
+                    run.player.inventory.set(slot, GameRun.Item.armor(previous.type()));
+                    run.messages.add("You equip " + item.name() + " and stow " + previous.name() + ".");
+                }
             }
             default -> run.messages.add("That item cannot be equipped.");
         }

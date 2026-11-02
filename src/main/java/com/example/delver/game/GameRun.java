@@ -1,5 +1,6 @@
 package com.example.delver.game;
 
+import com.example.delver.game.content.ArmorSlot;
 import com.example.delver.game.content.ArmorType;
 import com.example.delver.game.content.EnemyType;
 import com.example.delver.game.content.LootType;
@@ -78,6 +79,36 @@ final class GameRun {
         final List<Item> inventory = new ArrayList<>(List.of(Item.potion()));
         Weapon equippedWeapon = new Weapon(WeaponType.WORN_BLADE);
         Armor equippedArmor = new Armor(ArmorType.CLOTH_ARMOR);
+        Armor equippedHelmet;
+        Armor equippedGauntlets;
+        Armor equippedBoots;
+
+        Armor equippedArmor(ArmorSlot slot) {
+            return switch (slot) {
+                case CHEST -> equippedArmor;
+                case HELMET -> equippedHelmet;
+                case GAUNTLETS -> equippedGauntlets;
+                case BOOTS -> equippedBoots;
+            };
+        }
+
+        void equipArmor(ArmorSlot slot, Armor armor) {
+            switch (slot) {
+                case CHEST -> equippedArmor = armor;
+                case HELMET -> equippedHelmet = armor;
+                case GAUNTLETS -> equippedGauntlets = armor;
+                case BOOTS -> equippedBoots = armor;
+            }
+        }
+
+        int armorDefense() {
+            return armorBonus(equippedArmor) + armorBonus(equippedHelmet)
+                    + armorBonus(equippedGauntlets) + armorBonus(equippedBoots);
+        }
+
+        private int armorBonus(Armor armor) {
+            return armor == null ? 0 : armor.bonus();
+        }
     }
 
     static final class Enemy {

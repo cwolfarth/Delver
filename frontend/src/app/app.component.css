@@ -39,7 +39,6 @@ h1, h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.035em; }
 .inventory-card { border: 1px solid var(--line); background: #151813; padding: 16px; }
 .equipped-gear { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
 .equipped-gear>div { min-width: 0; padding: 9px; display: flex; flex-direction: column; gap: 5px; border: 1px solid #38402d; background: #1c2118; }
-.equipped-gear>div:last-child { border-color: #3a3530; background: #201d19; }
 .gear-type { color: #8f9879; font: 7px var(--mono); letter-spacing: .12em; }
 .equipped-gear strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #dedfd2; font: 11px var(--sans); }
 .equipped-gear small { color: #9ca18d; font: 8px var(--mono); }

@@ -1,5 +1,6 @@
 package com.example.delver.game;
 
+import com.example.delver.game.content.ArmorSlot;
 import com.example.delver.game.content.ItemRarity;
 import com.example.delver.game.map.TileType;
 import org.springframework.stereotype.Component;
@@ -42,11 +43,14 @@ final class GameSnapshotFactory {
         List<GameSnapshot.LootView> loot = run.loot.stream()
                 .filter(item -> visibleTiles[item.y][item.x])
                 .map(item -> new GameSnapshot.LootView(item.type.name(), item.name, item.x, item.y, item.amount,
-                        item.weaponType, item.armorType, lootAccuracy(item), lootRarity(item), lootSellValue(item)))
+                        item.weaponType, item.armorType, lootArmorSlot(item), lootAccuracy(item),
+                        lootRarity(item), lootSellValue(item)))
                 .toList();
         GameSnapshot.PlayerView player = new GameSnapshot.PlayerView(run.player.x, run.player.y,
                 run.player.hp, run.player.maxHp, run.player.gold, run.player.attack + run.player.equippedWeapon.bonus(),
-                weaponView(run.player.equippedWeapon), armorView(run.player.equippedArmor),
+                run.player.armorDefense(), weaponView(run.player.equippedWeapon), armorView(run.player.equippedArmor),
+                armorView(run.player.equippedHelmet), armorView(run.player.equippedGauntlets),
+                armorView(run.player.equippedBoots),
                 run.player.inventory.stream().map(this::inventoryItemView).toList(), run.player.inventoryCapacity);
         return new GameSnapshot(run.id, run.playerName, run.floor, run.turn, run.width, run.height,
                 map, player, enemies, loot, List.copyOf(run.messages), run.gameOver, run.score());
@@ -132,7 +136,7 @@ final class GameSnapshotFactory {
     }
 
     private GameSnapshot.ArmorView armorView(GameRun.Armor armor) {
-        return armor == null ? null : new GameSnapshot.ArmorView(armor.type(), armor.name(), armor.bonus(),
+        return armor == null ? null : new GameSnapshot.ArmorView(armor.type(), armor.name(), armor.type().slot(), armor.bonus(),
                 armor.type().rarity(), armor.type().sellValue());
     }
 
@@ -143,8 +147,13 @@ final class GameSnapshotFactory {
             default -> 0;
         };
         int accuracy = item.weaponType() == null ? 0 : item.weaponType().accuracy();
+        ArmorSlot armorSlot = item.armorType() == null ? null : item.armorType().slot();
         return new GameSnapshot.InventoryItemView(item.type().name(), item.name(), bonus,
-                item.weaponType(), item.armorType(), accuracy, itemRarity(item), itemSellValue(item));
+                item.weaponType(), item.armorType(), armorSlot, accuracy, itemRarity(item), itemSellValue(item));
+    }
+
+    private ArmorSlot lootArmorSlot(GameRun.Loot item) {
+        return item.armorType == null ? null : item.armorType.slot();
     }
 
     private Integer lootAccuracy(GameRun.Loot item) {
