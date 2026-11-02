@@ -235,9 +235,9 @@ class GameServiceTest {
     void gearCanBeEquippedFromTheGeneralInventory() {
         GameRun run = new GameRun(UUID.randomUUID(), "Ada");
         run.player.inventory.clear();
-        run.loot.add(new GameRun.Loot(WeaponType.IRON_SWORD, run.player.x, run.player.y));
+        run.loot.add(new GameRun.Loot(WeaponType.ARM_SWORD, run.player.x, run.player.y));
         inventoryService.collectLoot(run);
-        assertThat(run.player.inventory.getFirst().weaponType()).isEqualTo(WeaponType.IRON_SWORD);
+        assertThat(run.player.inventory.getFirst().weaponType()).isEqualTo(WeaponType.ARM_SWORD);
 
         inventoryService.equipItem(run, 0);
         assertThat(run.player.equippedWeapon.name()).isEqualTo("iron sword");
@@ -283,7 +283,7 @@ class GameServiceTest {
         for (int slot = 0; slot < run.player.inventoryCapacity; slot++) {
             run.player.inventory.add(GameRun.Item.potion());
         }
-        run.loot.add(new GameRun.Loot(WeaponType.IRON_SWORD, run.player.x, run.player.y));
+        run.loot.add(new GameRun.Loot(WeaponType.ARM_SWORD, run.player.x, run.player.y));
 
         inventoryService.collectLoot(run);
 
@@ -301,11 +301,25 @@ class GameServiceTest {
     }
 
     @Test
-    void playerAndEnemyHitRollsUseASeventyPercentChance() {
+    void hitRollsUseWeaponAccuracyButNeverFallBelowTheBaseChance() {
         assertThat(CombatService.rollToHit(randomReturning(0))).isTrue();
         assertThat(CombatService.rollToHit(randomReturning(69))).isTrue();
         assertThat(CombatService.rollToHit(randomReturning(70))).isFalse();
         assertThat(CombatService.rollToHit(randomReturning(99))).isFalse();
+
+        assertThat(CombatService.rollToHit(randomReturning(69), WeaponType.WORN_BLADE.accuracy())).isTrue();
+        assertThat(CombatService.rollToHit(randomReturning(70), WeaponType.WORN_BLADE.accuracy())).isFalse();
+        assertThat(CombatService.rollToHit(randomReturning(74), WeaponType.LONG_SWORD.accuracy())).isTrue();
+        assertThat(CombatService.rollToHit(randomReturning(75), WeaponType.LONG_SWORD.accuracy())).isFalse();
+
+        GameRun run = new GameRun(UUID.randomUUID(), "Ada");
+        GameRun.Enemy enemy = new GameRun.Enemy(EnemyType.GOBLIN, 1, 0);
+        new CombatService(randomWithHitRoll(74)).attack(run, enemy);
+        assertThat(run.messages).contains("You miss the goblin.");
+
+        run.player.equippedWeapon = new GameRun.Weapon(WeaponType.LONG_SWORD);
+        new CombatService(randomWithHitRoll(74)).attack(run, enemy);
+        assertThat(run.messages).anyMatch(message -> message.startsWith("You strike the goblin"));
     }
 
     @Test
@@ -333,12 +347,15 @@ class GameServiceTest {
 
     @Test
     void weaponAndArmorTypesOwnTheirNamesAndBonuses() {
-        assertThat(WeaponType.IRON_SWORD.displayName()).isEqualTo("iron sword");
-        assertThat(WeaponType.IRON_SWORD.attackBonus()).isEqualTo(2);
+        assertThat(WeaponType.ARM_SWORD.displayName()).isEqualTo("iron sword");
+        assertThat(WeaponType.ARM_SWORD.attackBonus()).isEqualTo(2);
         assertThat(ArmorType.LEATHER_ARMOR.displayName()).isEqualTo("leather armor");
         assertThat(ArmorType.LEATHER_ARMOR.defenseBonus()).isEqualTo(1);
         assertThat(WeaponType.DRAGONFANG.rarity().name()).isEqualTo("LEGENDARY");
         assertThat(WeaponType.DRAGONFANG.sellValue()).isPositive();
+        assertThat(WeaponType.WORN_BLADE.accuracy()).isNegative();
+        assertThat(WeaponType.ARM_SWORD.accuracy()).isGreaterThan(WeaponType.WORN_BLADE.accuracy());
+        assertThat(WeaponType.DRAGONFANG.accuracy()).isGreaterThan(WeaponType.ARM_SWORD.accuracy());
         assertThat(ArmorType.DRAGON_SCALE.rarity().name()).isEqualTo("LEGENDARY");
         assertThat(ArmorType.DRAGON_SCALE.sellValue()).isPositive();
         assertThat(java.util.Arrays.stream(WeaponType.values()).map(WeaponType::rarity).distinct())
@@ -356,11 +373,17 @@ class GameServiceTest {
         run.roomIds = new int[][]{{-1}};
         run.exploredTiles = new boolean[][]{{false}};
         run.loot.add(new GameRun.Loot(WeaponType.DRAGONFANG, 0, 0));
+        run.player.inventory.add(GameRun.Item.weapon(WeaponType.LONG_SWORD));
 
-        GameSnapshot.LootView loot = snapshotFactory.create(run).loot().getFirst();
+        GameSnapshot snapshot = snapshotFactory.create(run);
+        GameSnapshot.LootView loot = snapshot.loot().getFirst();
 
         assertThat(loot.rarity()).isEqualTo(ItemRarity.LEGENDARY);
         assertThat(loot.sellValue()).isEqualTo(WeaponType.DRAGONFANG.sellValue());
+        assertThat(loot.accuracy()).isEqualTo(WeaponType.DRAGONFANG.accuracy());
+        assertThat(snapshot.player().equippedWeapon().accuracy()).isEqualTo(WeaponType.WORN_BLADE.accuracy());
+        assertThat(snapshot.player().inventory().stream().filter(item -> item.weaponType() == WeaponType.LONG_SWORD)
+                .findFirst().orElseThrow().accuracy()).isEqualTo(WeaponType.LONG_SWORD.accuracy());
     }
 
     @Test
@@ -411,6 +434,17 @@ class GameServiceTest {
             public int nextInt(int bound) {
                 assertThat(bound).isEqualTo(100);
                 return value;
+            }
+        };
+    }
+
+    private Random randomWithHitRoll(int hitRoll) {
+        return new Random() {
+            @Override
+            public int nextInt(int bound) {
+                if (bound == 100) return hitRoll;
+                if (bound == 3) return 0;
+                throw new IllegalArgumentException("Unexpected random bound: " + bound);
             }
         };
     }

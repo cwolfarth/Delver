@@ -76,7 +76,7 @@
         <section class="inventory-card">
           <div class="section-heading"><span>INVENTORY</span><span class="heading-spark">{{ run.player.inventory.length }} / {{ run.player.inventoryCapacity }}</span></div>
           <div class="equipped-gear">
-            <div><span class="gear-type">EQUIPPED WEAPON</span><strong>{{ run.player.equippedWeapon.name }}</strong><small>Attack +{{ run.player.equippedWeapon.bonus }} · {{ run.player.equippedWeapon.rarity }} · {{ run.player.equippedWeapon.sellValue }} gold</small></div>
+            <div><span class="gear-type">EQUIPPED WEAPON</span><strong>{{ run.player.equippedWeapon.name }}</strong><small>Attack +{{ run.player.equippedWeapon.bonus }} · Accuracy {{ run.player.equippedWeapon.accuracy > 0 ? '+' : '' }}{{ run.player.equippedWeapon.accuracy }}% · {{ run.player.equippedWeapon.rarity }} · {{ run.player.equippedWeapon.sellValue }} gold</small></div>
             <div><span class="gear-type">EQUIPPED ARMOR</span><strong>{{ run.player.equippedArmor.name }}</strong><small>Defense +{{ run.player.equippedArmor.bonus }} · {{ run.player.equippedArmor.rarity }} · {{ run.player.equippedArmor.sellValue }} gold</small></div>
           </div>
           <div class="inventory-slots">

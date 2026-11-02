@@ -111,7 +111,7 @@ export class AppComponent implements OnInit {
   }
 
   inventoryItemDescription(item: InventoryItem): string {
-    if (item.type === 'WEAPON') return `Attack +${item.bonus} · ${item.rarity} · ${item.sellValue} gold`;
+    if (item.type === 'WEAPON') return `Attack +${item.bonus} · Accuracy ${item.accuracy > 0 ? '+' : ''}${item.accuracy}% · ${item.rarity} · ${item.sellValue} gold`;
     if (item.type === 'ARMOR') return `Defense +${item.bonus} · ${item.rarity} · ${item.sellValue} gold`;
     return 'Restores health';
   }

@@ -130,6 +130,7 @@ final class GameRun {
     record Weapon(WeaponType type) {
         String name() { return type.displayName(); }
         int bonus() { return type.attackBonus(); }
+        int accuracy() { return type.accuracy(); }
     }
 
     record Armor(ArmorType type) {

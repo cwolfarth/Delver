@@ -42,7 +42,7 @@ final class GameSnapshotFactory {
         List<GameSnapshot.LootView> loot = run.loot.stream()
                 .filter(item -> visibleTiles[item.y][item.x])
                 .map(item -> new GameSnapshot.LootView(item.type.name(), item.name, item.x, item.y, item.amount,
-                        item.weaponType, item.armorType, lootRarity(item), lootSellValue(item)))
+                        item.weaponType, item.armorType, lootAccuracy(item), lootRarity(item), lootSellValue(item)))
                 .toList();
         GameSnapshot.PlayerView player = new GameSnapshot.PlayerView(run.player.x, run.player.y,
                 run.player.hp, run.player.maxHp, run.player.gold, run.player.attack + run.player.equippedWeapon.bonus(),
@@ -128,7 +128,7 @@ final class GameSnapshotFactory {
 
     private GameSnapshot.WeaponView weaponView(GameRun.Weapon weapon) {
         return weapon == null ? null : new GameSnapshot.WeaponView(weapon.type(), weapon.name(), weapon.bonus(),
-                weapon.type().rarity(), weapon.type().sellValue());
+                weapon.accuracy(), weapon.type().rarity(), weapon.type().sellValue());
     }
 
     private GameSnapshot.ArmorView armorView(GameRun.Armor armor) {
@@ -142,8 +142,13 @@ final class GameSnapshotFactory {
             case ARMOR -> item.armorType().defenseBonus();
             default -> 0;
         };
+        int accuracy = item.weaponType() == null ? 0 : item.weaponType().accuracy();
         return new GameSnapshot.InventoryItemView(item.type().name(), item.name(), bonus,
-                item.weaponType(), item.armorType(), itemRarity(item), itemSellValue(item));
+                item.weaponType(), item.armorType(), accuracy, itemRarity(item), itemSellValue(item));
+    }
+
+    private Integer lootAccuracy(GameRun.Loot item) {
+        return item.weaponType == null ? null : item.weaponType.accuracy();
     }
 
     private ItemRarity lootRarity(GameRun.Loot item) {

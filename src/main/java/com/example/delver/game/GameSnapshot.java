@@ -33,16 +33,19 @@ public record GameSnapshot(
     }
 
     public record LootView(String type, String name, int x, int y, int amount,
-                           WeaponType weaponType, ArmorType armorType, ItemRarity rarity, int sellValue) {
+                           WeaponType weaponType, ArmorType armorType, Integer accuracy,
+                           ItemRarity rarity, int sellValue) {
     }
 
-    public record WeaponView(WeaponType type, String name, int bonus, ItemRarity rarity, int sellValue) {
+    public record WeaponView(WeaponType type, String name, int bonus, int accuracy,
+                             ItemRarity rarity, int sellValue) {
     }
 
     public record ArmorView(ArmorType type, String name, int bonus, ItemRarity rarity, int sellValue) {
     }
 
     public record InventoryItemView(String type, String name, int bonus,
-                                    WeaponType weaponType, ArmorType armorType, ItemRarity rarity, int sellValue) {
+                                    WeaponType weaponType, ArmorType armorType, int accuracy,
+                                    ItemRarity rarity, int sellValue) {
     }
 }

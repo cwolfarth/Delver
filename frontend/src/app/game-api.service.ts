@@ -13,6 +13,7 @@ export interface Weapon {
   type: WeaponType;
   name: string;
   bonus: number;
+  accuracy: number;
   rarity: ItemRarity;
   sellValue: number;
 }
@@ -29,6 +30,7 @@ export interface InventoryItem {
   type: 'POTION' | 'WEAPON' | 'ARMOR';
   name: string;
   bonus: number;
+  accuracy: number;
   weaponType: WeaponType | null;
   armorType: ArmorType | null;
   rarity: ItemRarity | null;
@@ -48,7 +50,7 @@ export interface GameSnapshot {
     equippedWeapon: Weapon; equippedArmor: Armor; inventory: InventoryItem[]; inventoryCapacity: number;
   };
   enemies: { type: EnemyType; name: string; x: number; y: number; hp: number }[];
-  loot: { type: string; name: string; x: number; y: number; amount: number; weaponType: WeaponType | null; armorType: ArmorType | null; rarity: ItemRarity | null; sellValue: number }[];
+  loot: { type: string; name: string; x: number; y: number; amount: number; weaponType: WeaponType | null; armorType: ArmorType | null; accuracy: number | null; rarity: ItemRarity | null; sellValue: number }[];
   messages: string[];
   gameOver: boolean;
   score: number;

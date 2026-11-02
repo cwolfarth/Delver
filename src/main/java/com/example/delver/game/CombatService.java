@@ -20,7 +20,7 @@ final class CombatService {
     }
 
     void attack(GameRun run, GameRun.Enemy enemy) {
-        if (!rollToHit(random)) {
+        if (!rollToHit(random, run.player.equippedWeapon.accuracy())) {
             run.messages.add("You miss the " + enemy.type.displayName() + ".");
             return;
         }
@@ -50,7 +50,12 @@ final class CombatService {
     }
 
     static boolean rollToHit(Random random) {
-        return random.nextInt(100) < HIT_CHANCE_PERCENT;
+        return rollToHit(random, 0);
+    }
+
+    static boolean rollToHit(Random random, int accuracy) {
+        int hitChance = Math.clamp(HIT_CHANCE_PERCENT + accuracy, HIT_CHANCE_PERCENT, 100);
+        return random.nextInt(100) < hitChance;
     }
 
     private void attackPlayer(GameRun run, GameRun.Enemy enemy) {
